@@ -6,6 +6,12 @@
   "directories": {
     "example": "example"
   },
+  "keywords": [
+    "react",
+    "react-component",
+    "async",
+    "react-async"
+  ],
   "scripts": {
     "start": "webpack-dev-server --config webpack.config.dev.js",
     "dev": "rimraf lib && webpack --config webpack.config.prod.js --display-error-details --progress --colors --watch",
