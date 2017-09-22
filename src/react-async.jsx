@@ -1,13 +1,12 @@
 import React, { Component, PropTypes } from 'react';
 
+const PENDING = 'pending';
+const RESOLVE = 'resolve';
+const REJECT = 'reject';
+const FINALLY = 'finally';
+
 function isPromise(obj) {
   return obj && typeof obj.then === 'function';
-}
-
-function link(namespace) {
-  return function(target) {
-    target.prototype.link = function() {};
-  };
 }
 
 export default class Async extends Component {
@@ -18,44 +17,80 @@ export default class Async extends Component {
   };
 
   state = {
-    status: 'pending',
-    pending: <div />,
-    resolve: <div />,
-    reject: <div />,
-    ['finally']: <div />
+    status: PENDING
   };
 
   componentDidMount() {
-    const { promise } = this.props;
+    const promise = this.props.await;
+    this.handlePromise(promise);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const promise = nextProps.await;
+    this.handlePromise(promise);
+  }
+
+  handlePromise(promise) {
     if (!isPromise(promise)) return;
+    this.setState({ status: 'pending' });
     promise
       .then(() => {
-        this.setState({ status: 'resolve' });
+        this.setState({ status: RESOLVE });
       })
       .catch(() => {
-        this.setState({ status: 'reject' });
+        this.setState({ status: REJECT });
       });
   }
 
-  componentWillUnmount() {}
-
   render() {
-    const { promise, children } = this.props;
+    const { children } = this.props;
+    const promise = this.props.await;
     if (!isPromise(promise)) return <div />;
 
-    console.log(children);
-
     return (
-      <div>
-        async {this.state.status}
+      <div
+        className={
+          'react-async' +
+            (this.props.className ? ' ' + this.props.className : '')
+        }
+        style={this.props.style}
+        key={Math.random()}
+      >
         {children
-          .filter(v => {
-            if (typeof v !== 'object') return true;
-            if (typeof v.type === 'string') return true;
-            if (!v.type) return true;
-            return v.type.name.toLowerCase() === this.state.status;
+          .filter(child => {
+            if (typeof child === 'function') return true;
+            if (typeof child !== 'object') return true;
+            if (typeof child.type === 'string') return true;
+            if (!child.type) return true;
+            const { status } = this.state;
+            const childName = child.type.name.toLowerCase();
+            const isMatchStatus = childName === status;
+            const isAsyncDone =
+              [REJECT, RESOLVE].findIndex(v => status === v) >= 0 &&
+              childName === FINALLY;
+            return isMatchStatus || isAsyncDone;
           })
-          .map(v => v)}
+          .map(child => {
+            if (typeof child === 'function') {
+              return (
+                <div className="react-async-function" key={Math.random()}>
+                  {child.call(this, this)}
+                </div>
+              );
+            } else {
+              return child;
+            }
+          })}
+      </div>
+    );
+  }
+}
+
+export class Pending extends Component {
+  render() {
+    return (
+      <div className="react-async-pending" {...this.props}>
+        {this.props.children}
       </div>
     );
   }
@@ -63,18 +98,30 @@ export default class Async extends Component {
 
 export class Resolve extends Component {
   render() {
-    return this.props.children;
+    return (
+      <div className="react-async-resolve" {...this.props}>
+        {this.props.children}
+      </div>
+    );
   }
 }
 
 export class Reject extends Component {
   render() {
-    return this.props.children;
+    return (
+      <div className="react-async-reject" {...this.props}>
+        {this.props.children}
+      </div>
+    );
   }
 }
 
 export class Finally extends Component {
   render() {
-    return this.props.children;
+    return (
+      <div className="react-async-finally" {...this.props}>
+        {this.props.children}
+      </div>
+    );
   }
 }
