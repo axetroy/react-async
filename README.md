@@ -1,5 +1,7 @@
 # react-async
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/axetroy/react-async.svg)](https://greenkeeper.io/)
+
 render the component with a async promise.
 
 [Online Demo](https://axetroy.github.io/react-async/)
